@@ -1,2 +1,7 @@
-# complexity-of-computations
-Research in theory of complexity of computations in algebraic algorithms.
+# Сложность вычислений.
+## _МФТИ, 2025_
+## Удовенко Артём
+
+Обзоры сложности задач в некоторой области математики. Алгебра и теория чисел.
+
+[Ссылка на работу](docs/project.pdf)

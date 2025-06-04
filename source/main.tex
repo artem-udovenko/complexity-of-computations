@@ -1,0 +1,497 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumitem}
+\usepackage{ragged2e}
+\usepackage[
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+    filecolor=blue
+]{hyperref}
+
+
+\title{Классификация сложности задач алгебры и теории чисел}
+\author{Удовенко Артём, Б05-322}
+\date{2025, МФТИ}
+
+\begin{document}
+\maketitle
+\begin{center}
+\textbf{Аннотация}
+\end{center}
+
+\noindent \textbf{Проблема:} Классификация вычислительной сложности задач алгебры и теории чисел является ключевой для теоретической и прикладной информатики и криптографии.
+
+\vspace{0.5em}
+
+\noindent \textbf{Важность:}
+\begin{itemize}[leftmargin=*,noitemsep]
+  \item Определение границ эффективной разрешимости для криптографических протоколов
+  \item Теоретическое обоснование сложности верификации алгоритмов
+  \item Установление связей между алгебраическими структурами и вычислительными моделями
+\end{itemize}
+
+\noindent \textbf{Методы:}
+\begin{itemize}[leftmargin=*,noitemsep]
+  \item Полиномиальные сводки между задачами
+  \item Анализ структуры доказательств в теории сложности и алгоритмах
+\end{itemize}
+
+\noindent \textbf{Основные результаты:}
+\begin{enumerate}[leftmargin=*,noitemsep]
+  \item \textbf{Решение квадратных диофантовых уравнений} (теория чисел) \\
+  Доказана \textbf{NP-полнота} через сведение \(3\text{SAT}\).
+
+  \item \textbf{Факторизация целых чисел} (криптография) \\
+  Принадлежит \(\mathbf{NP \cap coNP}\).
+
+  \item \textbf{Проверка эквивалентности арифметических выражений} (верификация) \\
+  \textbf{coNP-полнота} доказана через \(\text{TAUTOLOGY} \leq_p \text{Эквивалентность}\).
+
+  \item \textbf{Поиск квадратного корня в \(\mathbb{Z}_p\). Алгоритм Тонелли-Шенкса} (алгебра) \\
+  Принадлежит \textbf{RP}.
+
+  \item \textbf{Проверка простоты числа. Тест Миллера-Рабина} (алгоритмы) \\
+  Принадлежит \(\mathbf{RP}\).
+\end{enumerate}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Введение}
+\hspace{0.5cm} В данной работе рассматривается алгоритмическая сложность классических задач из алгебры и теории чисел. Нас интересует, в каких из стандартных классов сложности (таких как $NP$, $coNP$, $RP$) располагаются задачи, связанные с факторизацией целых чисел, проверкой эквивалентности полиномов, извлечением квадратного корня корня по модулю простого числа и решением частных случаев диофантовых уравнений. Напомним, что класс $NP$ включает задачи, решения которых можно проверить за полиномиальное время, в то время как $coNP$ состоит из дополнений таких задач. Класс $RP$ содержит задачи, допускающие вероятностное полиномиальное решение с односторонней ошибкой: если ответ «нет», алгоритм всегда прав, а если «да» — ошибается с фиксированной вероятностью, не превышающей $1/2$ \cite{Papadimitriou1994}. Формальнее определения и их имплементация описаны в статье.
+
+Классические задачи теории чисел тесно связаны с криптографией и вычислительной сложностью. Так, криптосистема RSA опирается на предположение о вычислительной трудности факторизации \cite{RSA1978}. При этом задача проверки простоты имеет полиномиальный детерминированный алгоритм после работы Агравала, Каяла и Саксены \cite{AKS2004}. Факторизация, в отличие от задачи простоты, до сих пор не имеет доказанного полиномиального алгоритма, но лежит в пересечении $NP \cap coNP$, что делает её маловероятным кандидатом на $NP$-полноту \cite{CrandallPomerance2005}, ведь тогда $NP = coNP$ и полиномиальная иерархия коллапсирует для $k \geq 1$. Другие задачи, такие как извлечение квадратных или $k$-х корней в конечных полях, могут быть решены детерминированно или вероятностно за полиномиальное время, в зависимости от параметров задачи \cite{Shoup1990}. При этом для некоторых видов диофантовых уравнений доказана $NP$-полнота, как показано в работе Мандерса и Адлемана \cite{MandersAdleman1980}, в то время как общая задача решения диофантовых уравнений является неразрешимой вследствие теоремы Матиясевича \cite{Matiyasevich1970}.
+
+Цель данной работы — провести классификацию перечисленных задач с точки зрения их размещения в стандартных классах сложности. Основное внимание уделяется выяснению того, какие задачи допускают эффективные (детерминированные или вероятностные) алгоритмы, какие являются $NP$-полными, а какие лежат в пересечении классов или являются полиномиально разрешимыми.
+
+\newpage
+
+\section{Решение квадратных диофантовых уравнений}
+
+В этом разделе формализуется задача решения общего \emph{квадратичного} диофантова уравнения и доказывается её NP‑полнота путём полиномиального сведения по Куку из задачи 3SAT.
+
+\subsection{Формулировка задачи}
+
+Пусть задан полином
+\[
+P(x_1,\dots,x_k)
+\;=\;\sum_{1\le i\le j\le k} a_{ij}\,x_i x_j
+\;+\;\sum_{i=1}^k b_i\,x_i
+\;+\;c,
+\]
+где все коэффициенты \(a_{ij},b_i,c\in\mathbb{Z}\) заданы в двоичном представлении.
+Требуется решить
+\textbf{Quadratic Diophantine Decision}:  существует ли вектор \(\mathbf x=(x_1,\dots,x_k)\in\mathbb{Z}^k\), при котором
+\[
+P(\mathbf x)=0?
+\]
+
+\subsection{Принадлежность классу NP}
+
+Если подать в качестве \emph{сертификата} \(\mathbf x\) полиномиальной длины от размера входа, проверка равенства \(P(\mathbf x)=0\) сводится к сумме и перемножению двоичных чисел и выполняется за полиномиальное время на детерминированной машине Тьюринга \cite{MA78}\cite{SD79}\cite{MO09}.
+
+\subsection{NP‑полнота и сведение из 3SAT}
+
+Для доказательства NP‑трудности выполняем классическую редукцию из задачи \textsc{3SAT}:
+
+\begin{enumerate}[1.]
+  \item Каждой булевой переменной \(p_i\) сопоставляется целочисленная переменная \(r_i\in\{0,1\}\).
+  \item Для каждой клаузы \(\sigma_k=(\ell_{k1}\lor\ell_{k2}\lor\ell_{k3})\) вводится вспомогательная переменная \(y_k\) и строится линейная комбинация
+    \[
+      R_k(r,y_k)
+      \;=\;
+      y_k \;-\;\bigl[\delta(\ell_{k1},r)+\delta(\ell_{k2},r)+\delta(\ell_{k3},r)\bigr]
+      \;+\;1,
+    \]
+    где \(\delta(\ell_{ki},r)=1\) если литерал \(\ell_{ki}\) истинен при \(r\), иначе 0 \cite{MSE13}\cite{CST12}.
+  \item Объединяем все \(R_k\) в одно уравнение
+    \[
+      \sum_{k=1}^m \bigl(R_k(r,y_k)\bigr)^2 \;=\;0,
+    \]
+    что даёт единый квадратичный полином от всех \(r_i,y_k\). Система разрешима тогда и только тогда, когда каждая клауза удовлетворима \cite{IUSPD18}\cite{MSE13}.
+  \item Размеры новых коэффициентов и число переменных растут лишь полиномиально от исходного размера задачи 3SAT \cite{SD79}\cite{SPR78}.
+\end{enumerate}
+
+\subsection{Вывод}
+Таким образом, проверяя наличие целочисленного решения квадратичного уравнения, мы решаем произвольный экземпляр 3SAT, что доказывает \emph{NP‑полноту} задачи.
+\newpage
+\section{Факторизация целых чисел}
+
+В этом разделе формализуется задача целочисленной факторизации и объясняется принадлежность пересечению классов \(\mathrm{NP}\) и \(\mathrm{coNP}\).
+
+\subsection{Формулировка задачи}
+
+Пусть задано целое \(n>1\) и порог \(k\). Рассмотрим задачу \textbf{Factor}: существует ли простой делитель \(p\le k\) числа \(n\)?
+
+\subsection{\(\mathrm{Factor}\in\mathrm{NP}\)}
+
+Для ответа «да» в качестве свидетеля можно предъявить простой делитель \(p\le k\).
+Проверка состоит из двух шагов:
+\begin{enumerate}
+  \item Убедиться, что \(p\mid n\) (вычисление НОД или прямое деление) за полиномиальное время.
+  \item Проверить, что \(p\) простое (например, с помощью алгоритма \hyperref[sec:aks]{AKS}) за полиномиальное время.
+\end{enumerate}
+Это полиномиальная проверка на детерминированной машине Тьюринга, поэтому задача лежит в NP \cite{CSSEWhyFactor}.
+
+\subsection{\(\mathrm{Factor}\in\mathrm{coNP}\)}
+
+Для ответа «нет» (отсутствие простого делителя \(\le k\)) можно предъявить полную факторизацию
+\[
+n = p_1^{e_1} p_2^{e_2} \cdots p_r^{e_r},
+\]
+где все простые \(p_i>k\).
+Проверка такого сертификата включает:
+\begin{enumerate}
+  \item Проверку того, что каждое \(p_i\) простое (алгоритм \hyperref[sec:aks]{AKS}).
+  \item Проверку, что \(\prod\limits_i p_i^{e_i} = n\).
+\end{enumerate}
+Обе операции выполняются за полиномиальное время, так как длины чисел полиномиальны от размера входа \cite{InfEdinburgh}.
+\subsection{Вывод}
+Таким образом, и для прямой, и для обратной задачи принадлежность слова языку эквивалентна существованию сертификата для полиномиальной детерминированной машины Тьюринга, то есть сам язык лежит в \(\mathbf{NP \cap coNP}\).
+\newpage
+\section{Проверка эквивалентности арифметических выражений}
+
+В этом разделе формализуется задача проверки тождества двух арифметических выражений над булевыми переменными и доказывается её \(\mathrm{coNP}\)‑полнота путём редукции из задачи TAUTOLOGY.
+
+\subsection{Формулировка задачи}
+
+Пусть заданы два арифметических выражения
+\[
+E_1(x_1,\dots,x_n),\quad E_2(x_1,\dots,x_n)
+\]
+над переменными \(x_i\in\{0,1\}\), константами и операциями сложения и умножения.
+Задача \textbf{Expression‑Equivalence} формулируется так: на вход подаются два выражения \(E_1,E_2\) в явном виде. Выполняется ли тождество
+\[
+E_1(x_1,\dots,x_n)=E_2(x_1,\dots,x_n)
+\quad\forall\,x_i\in\{0,1\}?
+\]
+\medskip
+
+Такое представление охватывает и проверку эквивалентности булевых формул, если операции \(\land,\lor,\lnot\) закодировать через полиномиальные выражения с помощью
+\[
+a\land b\mapsto a\cdot b,\quad
+a\lor b\mapsto a + b - a\cdot b,\quad
+\lnot a\mapsto 1 - a\quad
+\text{\cite{SO37185366}.}\]
+
+\subsection{\(\mathrm{Expression\text{-}Equivalence}\in\mathrm{coNP}\)}
+
+Эквивалентность лежит в \(\mathrm{coNP}\), поскольку её дополнение
+\[
+\{(E_1,E_2)\mid \exists\,x\!:E_1(x)\neq E_2(x)\}
+\]
+принадлежит NP: в качестве сертификата служит конкретное присваивание бит \(x=(a_1,\dots,a_n)\), на котором
+\(
+E_1(a)\neq E_2(a)
+\),
+а проверка этого факта (вычисление двух полиномиальных выражений и сравнение) выполняется за полиномиальное время \cite{CSE76579}.
+
+\subsection{Сведение из TAUTOLOGY}
+
+\paragraph{Задача TAUTOLOGY.}
+TAUTOLOGY — классическая coNP‑полная задача:
+На вход подается булевая формула \(\varphi(x_1,\dots,x_n)\). Вопрос: \(\varphi(x)\) истинна для всех \(x\)? \cite{WashingtonLect04}\cite{PennCIS511}.
+
+\paragraph{Редукция.}
+Пусть дана булева формула \(\varphi\). Построим арифметическое выражение
+\[
+E_\varphi(x)=\Bigl(\text{кодирование }
+\land,\lor,\lnot
+\text{ через }+,\,\cdot,\,1-\Bigr)
+\]
+так, что \(E_\varphi(x)=1\) тогда и только тогда, когда \(\varphi(x)=\text{истина}\) \cite{SO37185366}.
+Положим
+\[
+E_1(x)=E_\varphi(x),\qquad
+E_2(x)\equiv 1.
+\]
+Тогда
+\[
+\varphi\text{ — тавтология}
+\;\Longleftrightarrow\;
+E_\varphi(x)=1\ \forall x
+\;\Longleftrightarrow\;
+E_1\equiv E_2,
+\]
+и построение пары \((E_1,E_2)\) из \(\varphi\) занимает полиномиальное время (линейное увеличение размера) \cite{PennCIS511}.
+
+\subsection{Вывод.}
+Поскольку TAUTOLOGY является coNP‑полной и сводится полиномиально к Expression‑Equivalence, а проверка «не‑эквивалентности» лежит в NP, получаем, что Expression‑Equivalence является \(\mathrm{coNP}\)\hspace{0pt}\(-\)полной задачей.
+
+\newpage
+\section{Извлечение квадратного корня в \(\mathbb{Z}_p\): формализация и класс сложности}
+
+Рассмотрим язык
+\[
+L \;=\;\bigl\{(p,n,k)\mid p\text{ — нечётное простое},\;n,k\in\{0,\dots,p-1\},\;\exists\,x\in[0,k]:\,x^2\equiv n\pmod p\bigr\},
+\]
+и покажем, что при случайном подборе квадратичного невычета в алгоритме Тонелли–Шенкса проверка \((p,n,k)\in L\) лежит в классе \(\mathrm{RP}\).
+
+\subsection{Формулировка задачи}
+
+\begin{itemize}
+  \item \textbf{Вход:} тройка \((p,n,k)\), где \(p\) задано двоичным кодом и является нечётным простым, \(n,k\in\{0,\dots,p-1\}\).
+  \item \textbf{Язык:}
+    \[
+      L = \{(p,n,k)\mid \exists\,x\in\{0,\dots,k\}\colon x^2\equiv n\pmod p\}.
+    \]
+  \item \textbf{Задача:} вернуть \textit{accepted}, если такой \(x\) существует, иначе - \textit{rejected}.
+\end{itemize}
+
+\subsection{Алгоритм Тонелли-Шенкса и класс RP}
+
+Для поиска \(x\) без сертификата применим алгоритм Тонелли–Шенкса:
+
+\begin{enumerate}
+  \item Проверяем критерием Эйлера, что \(n\) является квадратичным вычетом:
+    \[
+      n^{\frac{p-1}{2}}\!\bmod p \;\stackrel{?}{=}\;1.
+    \]
+    Если результат \(\neq1\), корень не существует и машина возвращает \textit{rejected} \cite{TonelliShanksWiki}.
+  \item Разлагаем \(p-1 = Q\cdot 2^S\) с нечётным \(Q\) за \(O(\log p)\) шагов \cite{EulerCriterionWiki}.
+  \item Случайно выбираем \(z\in\{1,\dots,p-1\}\) и проверяем по тому же критерию Эйлера, что \(z\) — квадратичный невычет:
+    \[
+      z^{\frac{p-1}{2}}\!\bmod p = -1.
+    \]
+    Вероятность успеха одной попытки равна \(1/2\) (половина элементов поля) \cite{RPWiki}.
+  \item Инициализируем
+    \[
+      c=z^Q,\quad R=n^{\frac{Q+1}{2}},\quad t=n^Q,\quad M=S,
+    \]
+    и повторяем:
+    \begin{itemize}
+      \item Если \(t=1\), возвращаем \(x=R\).
+      \item Иначе находим наименьшее \(i\in[0,M-1]\) с \(t^{2^i}=1\), вычисляем
+        \(b=c^{2^{\,M-i-1}}\) и обновляем
+        \(\;M\leftarrow i,\;c\leftarrow b^2,\;t\leftarrow t\,b^2,\;R\leftarrow R\,b.\)
+    \end{itemize}
+    После ≤ \(S\) итераций получаем искомый корень \(\pm R\) \cite{MenezesHAC}.
+  \item Проверяем, что \(\min(R,p-R)\le k\). Если да - принимаем, иначе - отклоняем.
+\end{enumerate}
+
+Вся случайность сосредоточена лишь в выборе \(z\). При \((p,n,k)\in L\) алгоритм с вероятностью ≥ 1/2 найдёт корень, при \((p,n,k)\notin L\) он всегда вернёт «нет». Это точно соответствует определению \(\mathrm{RP}\) \cite{Shanks1973}.
+
+\subsection{Вычислительная сложность}
+
+\begin{itemize}
+  \item Проверка критерия Эйлера и степенных операций занимает \(O(\log^2 p)\) битовых операций.
+  \item Поиск квадратичного невычета в среднем требует 2 проверок — \(O(\log^2 p)\).
+  \item Итеративная фаза Тонелли–Шенкса делает не более \(S=\nu_2(p-1)\le\log p\) шагов, каждый - \(O(\log^2 p)\).
+\end{itemize}
+В сумме общее время - \(O(\log^3 p)\), то есть полиномиально от размера входа \cite{Tonelli1891}.
+
+\subsection{Вывод}
+
+Язык
+\[
+L = \{(p,n,k)\mid \exists\,x\le k:\,x^2\equiv n\pmod p\}
+\]
+ имеет рандомизированный полиномиальный алгоритм с односторонней ошибкой (Тонелли-Шенкса), что даёт
+\[
+L \;\in\;\mathrm{RP}\,.
+\]
+
+\newpage
+\section{Проверка на простоту и тест Миллера–Рабина}
+
+Определим язык
+\[
+L \;=\;\bigl\{(n,k)\mid n>2\text{ нечётно},\;n\text{ проходит }k\text{ раундов теста Миллера–Рабина}\bigr\}.
+\]
+Опишем сам тест, оценим вероятность ошибок и покажем, что \(L\in RP\) с верхней границей ошибки \((1/4)^k\).
+
+\subsection{Формулировка задачи}
+
+\begin{itemize}
+  \item \textbf{Вход:} нечётное целое \(n>2\), заданное в двоичном виде, и параметр точности \(k\in\mathbb{N}\) (для теоретической точности \(k\) передается в единичной системе счисления).
+  \item \textbf{Язык:}
+    \[
+      L
+      =\bigl\{(n,k)\mid
+      \underbrace{\text{ни один из }k\text{ раундов не вернул «composite»}}_{\text{probably prime}}\bigr\}.
+    \]
+  \item \textbf{Задача:} Вернуть \textit{accepted}, если \(n\;-\;probably\; prime\), иначе \textit{rejected}.
+\end{itemize}
+
+\subsection{Алгоритм Миллера–Рабина}
+
+Пусть \(n-1 = 2^s d\) с нечётным \(d\). Один раунд теста состоит из следующих шагов:
+
+\begin{enumerate}
+  \item Случайно выбираем базу \(a\in\{2,\dots,n-2\}\) \cite{WikipediaMR}.
+  \item Вычисляем \(x \gets a^d \bmod n\) (быстрое возведение в степень) \cite{WikipediaMR}.
+  \item Если \(x = 1\) или \(x = n-1\), раунд считается пройденным.
+  \item Иначе повторяем до \(s-1\) раз:
+    \[
+      x \gets x^2 \bmod n;
+      \quad
+      \text{если }x = n-1,\text{ раунд пройден.}
+    \]
+  \item Если за все итерации ни разу не встретилось \(n-1\), возвращаем «composite».
+\end{enumerate}
+
+Производим \(k\) независимых раундов; если ни один не вернул «composite», итоговый ответ — «probably prime» \cite{CornellMR}.
+
+\subsection{Вероятность ошибок и класс \(\mathrm{RP}\)}
+
+\begin{itemize}
+  \item Если \(n\) простое, тест никогда не отвергает (нет ложных отрицаний) \cite{ANUPrimality}.
+  \item Если \(n\) составное, то для каждого раунда вероятность ошибочно принять \(n\) не более \(1/4\).
+  \item После \(k\) раундов независимых испытаний вероятность ошибки не превышает \((1/4)^k\) \cite{MathSE}.
+\end{itemize}
+\[x\in L\iff \mathbf{P}(M(x)=1)\geq1-\frac{1}{4^k}\]
+Это соответствует определению класса \(\mathrm{RP}\) (односторонняя ошибка, полиномиальное время) \cite{RPWiki}\cite{CMUHandout}.
+
+\subsection{Вычислительная сложность}
+
+\begin{itemize}
+  \item Разложение \(n-1 = 2^s d\) требует \(O(\log n)\) битовых операций.
+  \item Одно модульное возведение в степень за \(O(\log n)\) умножений; до \(s\) дополнительных квадратирований — итого \(O(\log^2 n)\) \cite{WikipediaMR}.
+  \item \(k\) раундов требуют \(O(k\cdot\log^2 n)\) операций, то есть полиномиально от размера входа \cite{WikipediaMR}.
+\end{itemize}
+
+\subsection{Вывод}
+Задача теста числа на простоту методом Миллера-Рабина принадлежит классу RP, при этом за полиномиальное количество итераций можно уменьшить ошибку экспоненциально. Сам алгоритм вычислительно прост и имеет хорошую асимптотику, поэтому может иметь прикладное значение.
+
+\subsection{Детерминированные улучшения}
+
+\begin{itemize}
+  \item Для \(n<2^{64}\) существуют фиксированные наборы баз \(a\), гарантирующие детерминированный тест без случайности.
+  \item Полностью детерминированные тесты (\hyperref[sec:aks]{AKS}, ECPP) работают в \(\mathrm{P}\), но с большей практической сложностью \cite{ANUPrimality}.
+\end{itemize}
+
+\newpage
+
+\section{Примечания [Алгоритм AKS]}
+\label{sec:aks}
+
+Алгоритм \textbf{AKS} (Agrawal–Kayal–Saxena) — это детерминированный полиномиальный алгоритм проверки, является ли заданное целое число $n$ простым \cite{AKS}.
+
+Основная идея алгоритма: число $n$ — простое тогда и только тогда, когда выполняется сравнение:
+
+\[
+(x - 1)^n \equiv x^n - 1 \pmod{n}
+\]
+
+в кольце многочленов по модулю $n$. Однако на практике проверка выполняется в меньшем кольце $ \mathbb{Z}_n[x]/(x^r - 1) $ для подходящего $r$, чтобы упростить вычисления.
+
+Алгоритм работает за полиномиальное время и не использует вероятностных методов, что делает его важным результатом в теории чисел.
+
+\newpage
+\section{Список литературы}
+\renewcommand{\refname}{}
+
+
+\begin{thebibliography}{}
+
+\bibitem{Papadimitriou1994}
+Х.~Пападимитриу, \emph{Теория сложности вычислений}. М.: Мир, 1994.
+
+\bibitem{RSA1978}
+R.~L.~Rivest, A.~Shamir, L.~Adleman, ``A method for obtaining digital signatures and public-key cryptosystems,'' \emph{Commun. ACM}, vol.~21, no.~2, pp.~120--126, 1978.
+
+\bibitem{Pratt1975}
+V.~R.~Pratt, ``Every prime has a succinct certificate,'' \emph{SIAM J. Comput.}, vol.~4, no.~3, pp.~214--220, 1975.
+
+\bibitem{AKS2004}
+M.~Agrawal, N.~Kayal, N.~Saxena, ``Primes is in P,'' \emph{Annals of Mathematics}, vol.~160, no.~2, pp.~781--793, 2004.
+
+\bibitem{CrandallPomerance2005}
+R.~Crandall, C.~Pomerance, \emph{Prime Numbers: A Computational Perspective}. 2nd ed. Springer, 2005.
+
+\bibitem{Shoup1990}
+V.~Shoup, ``On the Deterministic Complexity of Factoring Polynomials over Finite Fields,'' \emph{Inform. Process. Lett.}, vol.~33, no.~5, pp.~261--267, 1990.
+
+\bibitem{MandersAdleman1980}
+K.~L.~Manders, L.~M.~Adleman, ``NP-complete decision problems for quadratic polynomials,'' \emph{SIAM J. Comput.}, vol.~9, no.~2, pp.~323--329, 1980.
+
+\bibitem{Matiyasevich1970}
+Yu.~V.~Matiyasevich, ``Enumerable sets are Diophantine,'' \emph{Doklady Akad. Nauk SSSR}, vol.~191, pp.~279--282, 1970.
+
+
+\bibitem{MA78}
+K.~Manders и L.~Adleman, ``NP-complete decision problems for quadratic polynomials,'' \emph{J. Comput. Syst. Sci.}, том~16, вып.~2, с.~168-184, 1978.
+
+\bibitem{SD79}
+R.~S.~Smith и J.~Davis, ``Binary quadratic Diophantine equations are NP-complete,'' \emph{Theoret. Comput. Sci.}, том~8, вып.~3, с.~215-223, 1979.
+
+\bibitem{MO09}
+J.~C.~Lagarias, ``Succinct certificates for the solvability of binary quadratic Diophantine equations,'' arXiv:math/0611209v2, 2009.
+
+\bibitem{MSE13}
+Math.StackExchange, ``Please help understand how \(ax^2+by-c=0\) is NP Complete,'' 2013.
+
+\bibitem{CST12}
+CSTheory.StackExchange, ``Diophantine equations and complexity classes,'' 2012.
+
+\bibitem{IUSPD18}
+R.~G.~de~Lima et al., ``A polynomial-time reduction of 3SAT to the quadratic congruence problem,'' \emph{IME-USP Tech. Rep.}, 2018.
+
+\bibitem{SPR78}
+K.~Manders и L.~Adleman, ``Diophantine complexity,'' в \emph{Proc. FOCS}, стр.~81-88, IEEE, 1976.
+
+\bibitem{CSSEWhyFactor}
+\href{https://cs.stackexchange.com/questions/52722/why-is-factor-in-co-np}{M.~Shankar, ``Why is FACTOR in co-NP?,'' \emph{Computer Science StackExchange}, 2014}.
+
+\bibitem{InfEdinburgh}
+\href{https://www.inf.ed.ac.uk/teaching/courses/cmc/notes/Lecture_10.pdf}{``Lecture~10: NP-intermediate candidates,'' \emph{University of Edinburgh}, 2018}.
+
+\bibitem{SO37185366}
+\href{https://stackoverflow.com/questions/37185366/two-boolean-expressions-equivalence-co-np}{Stack Overflow user d3pd, ``Two boolean expressions equivalence. Co-NP?''}.
+
+\bibitem{CSE76579}
+\href{https://cs.stackexchange.com/questions/76579/proof-that-taut-is-conp-complete-or-that-a-problem-is-conp-complete-if-its-comp}{``Proof that TAUT is coNP-complete,'' \emph{Computer Science StackExchange}, 2017}.
+
+\bibitem{WashingtonLect04}
+\href{https://courses.cs.washington.edu/courses/cse531/16wi/lectures/lect04.pdf}{``Lecture~4: More NP-completeness, NP-search, coNP,'' \emph{University of Washington}, 2016}.
+
+\bibitem{PennCIS511}
+\href{https://www.seas.upenn.edu/~cis5110/notes/cis511-sl15.pdf}{``Chapter~10: Some NP-Complete Problems,'' \emph{UPenn CIS~5110}}.
+
+\bibitem{TonelliShanksWiki}
+\href{https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm}{``Tonelli-Shanks algorithm,'' \emph{Wikipedia}}.
+
+\bibitem{EulerCriterionWiki}
+\href{https://en.wikipedia.org/wiki/Euler%27s_criterion}{``Euler's criterion,'' \emph{Wikipedia}}.
+
+\bibitem{RPWiki}
+\href{https://en.wikipedia.org/wiki/RP_%28complexity%29}{``RP (complexity),'' \emph{Wikipedia}}.
+
+\bibitem{MenezesHAC}
+A.~J. Menezes, P.~C. van Oorschot, and S.~A. Vanstone,
+\emph{Handbook of Applied Cryptography}, CRC Press, 1996.
+
+\bibitem{Shanks1973}
+D.~Shanks, ``Five Number-theoretic Algorithms,'' в \emph{Proc. Manitoba Conf. on Numerical Math.}, 1973, стр.~51-70.
+
+\bibitem{Tonelli1891}
+A.~Tonelli, ``Bemerkung über die Auflösung quadratischer Congruenzen,''
+\emph{Nachr. K. Ges. Wiss. Göttingen}, 1891, стр.~344-346.
+
+\bibitem{WikipediaMR}
+\href{https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test}{``Miller-Rabin primality test,'' \emph{Wikipedia}}.
+
+\bibitem{CornellMR}
+\href{https://www.cs.cornell.edu/courses/cs4820/2010sp/handouts/MillerRabin.pdf}{``The Miller-Rabin Randomized Primality Test,'' \emph{Cornell CS4820}, 2010}.
+
+\bibitem{ANUPrimality}
+\href{https://maths-people.anu.edu.au/~brent/pd/comp4600_primality.pdf}{R.~P.~Brent, ``Primality Testing,'' \emph{ANU Math. Sci. Inst.}, 2009}.
+
+\bibitem{MathSE}
+\href{https://math.stackexchange.com/questions/4202451/miller-rabin-primality-accuracy}{``Probability of error in Miller-Rabin,'' \emph{Math.StackExchange}, 2019}.
+
+\bibitem{CMUHandout}
+\href{https://www.cs.cmu.edu/afs/cs/academic/class/15859-f04/www/scribes/lec2.pdf}{``Randomized Polynomial Time (RP),'' \emph{CMU Lecture Notes}, 2004}.
+\bibitem{AKS}
+\href{https://en.m.wikipedia.org/wiki/AKS_primality_test}{``AKS primality test.``\emph{Wikipedia}}
+
+\end{thebibliography}
+
+
+\end{document}
